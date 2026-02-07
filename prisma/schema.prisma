@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String     @id @default(cuid())
+  clerkUserId String     @unique
+  email       String     @unique
+  name        String
+  avatar      String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  workflows   Workflow[]
+  folders     Folder[]
+  
+  @@index([clerkUserId])
+  @@index([email])
+}
+
+model Workflow {
+  id        String   @id @default(cuid())
+  name      String   @default("untitled")
+  nodes     Json     @default("[]")
+  edges     Json     @default("[]")
+  thumbnail String?  @db.Text
+  
+  userId    String
+  folderId  String?
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder    Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  runs      WorkflowRun[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([folderId])
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model Folder {
+  id        String     @id @default(cuid())
+  name      String
+  
+  userId    String
+  parentId  String?
+  
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    Folder?    @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children  Folder[]   @relation("FolderHierarchy")
+  workflows Workflow[]
+  
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([parentId])
+  @@index([userId, parentId])
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+// ============================================================================
+// Workflow History Models
+// ============================================================================
+
+model WorkflowRun {
+  id          String    @id @default(cuid())
+  workflowId  String
+  runScope    String    // 'full' | 'selected' | 'single'
+  status      String    // 'running' | 'completed' | 'failed' | 'partial'
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  duration    Int?      // in milliseconds
+  nodeCount   Int       // total nodes in this run
+  
+  workflow    Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  nodeRuns    NodeRun[]
+  
+  @@index([workflowId])
+  @@index([workflowId, startedAt(sort: Desc)])
+}
+
+model NodeRun {
+  id            String      @id @default(cuid())
+  workflowRunId String
+  nodeId        String
+  nodeName      String
+  nodeType      String
+  status        String      // 'running' | 'completed' | 'failed'
+  startedAt     DateTime    @default(now())
+  completedAt   DateTime?
+  duration      Int?        // in milliseconds
+  inputData     Json?       // inputs used
+  outputData    Json?       // outputs generated
+  error         String?
+  
+  workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+  
+  @@index([workflowRunId])
+}
+
