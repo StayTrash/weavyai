@@ -320,4 +320,4 @@ For production:
 ---
 
 
-Private project. Built with Next.js and ❤️.
+Built with Next.js and ❤️.
