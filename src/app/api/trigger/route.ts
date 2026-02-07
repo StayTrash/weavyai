@@ -81,11 +81,19 @@ export async function GET(request: NextRequest) {
 
         const run = await runs.retrieve(runId);
 
+        // Normalize error to a string (Trigger.dev may return an error object)
+        const errorMessage =
+            run.error == null
+                ? undefined
+                : typeof run.error === 'string'
+                  ? run.error
+                  : (run.error as { message?: string })?.message ?? JSON.stringify(run.error);
+
         return NextResponse.json({
             runId: run.id,
             status: run.status,
             output: run.output,
-            error: run.error,
+            error: errorMessage,
             isCompleted: run.status === 'COMPLETED',
             isFailed: run.status === 'FAILED' || run.status === 'CANCELED' || run.status === 'SYSTEM_FAILURE',
         });

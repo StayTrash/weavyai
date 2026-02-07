@@ -139,7 +139,7 @@ export function LLMNode({ id, data, selected }: NodeProps<LLMFlowNode>) {
       const userMessage = inputs.userMessage || data.userMessage || '';
 
       // Collect all images (base64 and URLs converted to base64)
-      let allImages: string[] = inputs.images.length > 0 ? [...inputs.images] : (data.images ? [...data.images] : []);
+      const allImages: string[] = inputs.images.length > 0 ? [...inputs.images] : (data.images ? [...data.images] : []);
 
       // Convert any connected image URLs to base64
       if (inputs.imageUrls && inputs.imageUrls.length > 0) {
@@ -217,20 +217,30 @@ export function LLMNode({ id, data, selected }: NodeProps<LLMFlowNode>) {
       }
 
     } catch (error) {
+      const errorStr =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'string'
+            ? error
+            : typeof error === 'object' && error !== null && 'message' in error
+              ? String((error as { message?: unknown }).message)
+              : 'Unknown error';
+      const safeError = errorStr && errorStr !== '[object Object]' ? errorStr : 'Task failed. See Trigger.dev dashboard for details.';
+
       updateNodeData<LLMFlowNode>(id, {
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: safeError,
       });
 
       updateTask(taskId, {
         status: 'failed',
         completedAt: new Date(),
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: safeError,
       });
 
       // Record failure in history
       if (nodeRunId) {
-        await completeNodeRun(nodeRunId, 'failed', undefined, error instanceof Error ? error.message : 'Unknown error');
+        await completeNodeRun(nodeRunId, 'failed', undefined, safeError);
       }
       if (runId) {
         await completeRun(runId, 'failed');
@@ -373,7 +383,7 @@ export function LLMNode({ id, data, selected }: NodeProps<LLMFlowNode>) {
             >
               <div className="flex items-start gap-2">
                 <X className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>{data.error}</span>
+                <span>{typeof data.error === 'string' ? data.error : String(data.error)}</span>
               </div>
             </div>
           )}
