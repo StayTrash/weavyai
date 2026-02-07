@@ -1,4 +1,4 @@
-# Galaxy.ai
+# Weavy
 
 **Visual AI workflow builder** — design node-based pipelines with images, video, text, and LLMs. Run them locally or in the cloud with Trigger.dev. Built with Next.js, Clerk, Prisma, and Google Gemini.
 
@@ -25,7 +25,7 @@
 
 ## Overview
 
-Galaxy.ai (also known as **Weave_It** in the codebase) is a **visual workflow builder** where you:
+**Weavy** is a **visual workflow builder** where you:
 
 - **Add nodes** — Text, Image, Video, Crop Image, Extract Frame, and LLM (Gemini).
 - **Connect them** — Drag edges between outputs and inputs (e.g. image → LLM, text → LLM).

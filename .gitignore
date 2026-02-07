@@ -39,7 +39,7 @@ yarn-error.log*
 
 # vercel
 .vercel
-
+DEMO_VIDEO_SCRIPT.md
 # typescript
 *.tsbuildinfo
 next-env.d.ts

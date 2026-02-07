@@ -72,13 +72,6 @@ export const llmTask = task({
             throw new Error("GOOGLE_GEMINI_API_KEY is not configured. Please add it to your environment variables.");
         }
 
-        // Initialize Gemini
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const generativeModel = genAI.getGenerativeModel({
-            model,
-            safetySettings: SAFETY_SETTINGS,
-        });
-
         // Build the prompt parts
         const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
 
@@ -103,34 +96,46 @@ export const llmTask = task({
             }
         }
 
-        try {
-            // Generate content
-            logger.info("Calling Gemini API...");
+        const callGemini = async (key: string) => {
+            const genAI = new GoogleGenerativeAI(key);
+            const generativeModel = genAI.getGenerativeModel({ model, safetySettings: SAFETY_SETTINGS });
             const result = await generativeModel.generateContent(parts);
             const response = await result.response;
-            const text = response.text();
+            return response.text();
+        };
 
+        try {
+            logger.info("Calling Gemini API...");
+            const text = await callGemini(apiKey);
             logger.info("LLM task completed", { outputLength: text.length });
-
             return { output: text };
         } catch (error) {
-            logger.error("LLM API Error", { error });
+            const err = error instanceof Error ? error : new Error(String(error));
+            const msg = err.message.toLowerCase();
+            const isQuotaOrRate = msg.includes('quota') || msg.includes('rate') || msg.includes('429') || msg.includes('resource_exhausted');
 
-            if (error instanceof Error) {
-                // Check for quota/rate limit errors
-                if (error.message.includes('quota') || error.message.includes('rate')) {
-                    throw new Error("API quota exceeded. Please try again later or check your API key limits.");
+            if (isQuotaOrRate) {
+                const backupKey = process.env.GOOGLE_GEMINI_API_KEY_BACKUP;
+                if (backupKey && backupKey !== apiKey) {
+                    logger.info("Quota/rate limit hit with primary key, retrying with backup key...");
+                    try {
+                        const text = await callGemini(backupKey);
+                        logger.info("LLM task completed with backup key", { outputLength: text.length });
+                        return { output: text };
+                    } catch (backupError) {
+                        logger.error("Backup key also failed", { error: backupError });
+                    }
                 }
-
-                // Check for invalid API key
-                if (error.message.includes('API key') || error.message.includes('authentication')) {
-                    throw new Error("Invalid API key. Please check your GOOGLE_GEMINI_API_KEY.");
-                }
-
-                throw error;
+                throw new Error(
+                    `API quota exceeded. Please try again later or check your API key limits. (API: ${err.message})`
+                );
             }
 
-            throw new Error("An unexpected error occurred while processing your request.");
+            if (msg.includes('api key') || msg.includes('authentication')) {
+                throw new Error(`Invalid API key. Please check your GOOGLE_GEMINI_API_KEY. (API: ${err.message})`);
+            }
+
+            throw error;
         }
     },
 });
