@@ -530,24 +530,24 @@ export const marketingKitWorkflow = {
 
         // ========== CONVERGENCE CONNECTIONS ==========
 
-        // LLM #1 output → LLM #2 user_message (product description as the message)
+        // LLM #1 output (Generate Description) → LLM #2 first input (system_prompt)
         {
             id: 'e-llm1-llm2',
             source: 'llm-description',
             sourceHandle: 'output',
             target: 'llm-final',
-            targetHandle: 'user_message',
+            targetHandle: 'system_prompt',
             type: 'custom',
             style: { stroke: '#10B981', strokeWidth: 2 }, // Green for LLM output flow
         },
 
-        // Text #3 (Social Media Prompt) → LLM #2 system_prompt
+        // Text #3 (Social Media Prompt) → LLM #2 second/middle input (user_message)
         {
             id: 'e-system2-llm2',
             source: 'system-prompt-2',
             sourceHandle: 'output',
             target: 'llm-final',
-            targetHandle: 'system_prompt',
+            targetHandle: 'user_message',
             type: 'custom',
             style: { stroke: '#8B5CF6', strokeWidth: 2 },
         },
