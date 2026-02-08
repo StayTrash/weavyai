@@ -115,7 +115,7 @@ Authentication is handled by **Clerk**; **Transloadit** powers file uploads for 
 ## Quick start
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/StayTrash/weavyai.git
 cd client
 bun install
 cp .env.example .env
