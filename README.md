@@ -116,7 +116,6 @@ Authentication is handled by **Clerk**; **Transloadit** powers file uploads for 
 
 ```bash
 git clone https://github.com/StayTrash/weavyai.git
-cd client
 bun install
 cp .env.example .env
 # Edit .env with your keys (see Environment variables and Setup guide)
@@ -201,7 +200,7 @@ Copy `.env.example` to `.env` and fill in the values. Never commit `.env`.
 ## Project structure
 
 ```
-client/
+root/
 ├── prisma/
 │   └── schema.prisma          # User, Workflow, Folder, WorkflowRun, NodeRun
 ├── src/
